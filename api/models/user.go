@@ -1,6 +1,7 @@
 package models
 
 import (
+	"anios/post-go-api/api/utils"
 	"errors"
 	"html"
 	"log"
@@ -58,7 +59,7 @@ func (u *User) Validate(action string) error {
 			return errors.New("Required Email")
 		}
 
-		if err := checkmail.ValidateFormat(u.Email); err != nil {
+		if err := utils.ValidateFormat(u.Email); err != nil {
 			return errors.New("Invalid Email")
 		}
 	case "login":
@@ -68,9 +69,12 @@ func (u *User) Validate(action string) error {
 		if u.Email == "" {
 			return errors.New("Required Email")
 		}
-		if err := checkmail.ValidateFormat(u.Email); err != nil {
-			return errors.New("Invalid Email")
+		if err := utils.ValidateFormat(u.Email); err != nil {
+
 		}
+		//if err := checkemail.ValidateFormat(u.Email); err != nil {
+		//	return errors.New("Invalid Email")
+		//}
 	default:
 		if u.Nickname == "" {
 			return errors.New("Required Nickname")
@@ -81,7 +85,7 @@ func (u *User) Validate(action string) error {
 		if u.Email == "" {
 			return errors.New("Required Email")
 		}
-		if err := checkemail.ValidateFormat(u.Email); err != nil {
+		if err := utils.ValidateFormat(u.Email); err != nil {
 			return errors.New("Invalid Email")
 		}
 	}
@@ -111,13 +115,14 @@ func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 
 func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	var err error
-	err = db.Debug().Model(&Users{}).Where("id = ?", uid).Take(&u).Error
+	err = db.Debug().Model(User{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &User{}, err
 	}
 	if gorm.IsRecordNotFoundError(err) {
 		return &User{}, errors.New("User Not Found")
 	}
+	return u, err
 }
 
 func (u *User) UpdateUser(db *gorm.DB, uid uint32) (*User, error) {
@@ -128,18 +133,18 @@ func (u *User) UpdateUser(db *gorm.DB, uid uint32) (*User, error) {
 
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"password": u.Password,
-			"nickname": u.Nickname,
-			"email": u.Email,
-			"update_at": time.Now()
+			"password":  u.Password,
+			"nickname":  u.Nickname,
+			"email":     u.Email,
+			"update_at": time.Now(),
 		},
 	)
-	if db.Error != nil{
+	if db.Error != nil {
 		return &User{}, db.Error
 	}
 
 	err = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).Error
-	if err != nil{
+	if err != nil {
 		return &User{}, err
 	}
 
